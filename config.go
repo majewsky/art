@@ -19,36 +19,23 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"io/ioutil"
+
+	toml "github.com/BurntSushi/toml"
 )
 
-func main() {
-	err := _main()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
+//Configuration is the contents of the configuration file.
+type Configuration struct {
+	Sources []*Source `toml:"source"`
 }
 
-func _main() error {
-	cfg, err := readConfig()
+func readConfig() (*Configuration, error) {
+	bytes, err := ioutil.ReadFile("./art.toml")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	for _, src := range cfg.Sources {
-		err := src.discoverPackages()
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("source: %s\n", src.Path)
-		for _, pkg := range src.Packages {
-			fmt.Printf("%#v\n", pkg)
-		}
-	}
-
-	_ = cfg
-	return nil
+	var cfg Configuration
+	err = toml.Unmarshal(bytes, &cfg)
+	return &cfg, err
 }

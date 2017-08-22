@@ -18,37 +18,17 @@
 
 package main
 
-import (
-	"fmt"
-	"os"
-)
-
-func main() {
-	err := _main()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
+//Package is satisfied by types HoloBuildPackage and NativePackage.
+type Package interface {
 }
 
-func _main() error {
-	cfg, err := readConfig()
-	if err != nil {
-		return err
-	}
+//HoloBuildPackage is a package that can be built from a package declaration by
+//using holo-build(8).
+type HoloBuildPackage struct {
+	Path string
+}
 
-	for _, src := range cfg.Sources {
-		err := src.discoverPackages()
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("source: %s\n", src.Path)
-		for _, pkg := range src.Packages {
-			fmt.Printf("%#v\n", pkg)
-		}
-	}
-
-	_ = cfg
-	return nil
+//NativePackage is a package that can be built from a PKGBUILD using makepkg(8).
+type NativePackage struct {
+	Path string
 }
