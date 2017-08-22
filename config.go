@@ -27,6 +27,9 @@ import (
 //Configuration is the contents of the configuration file.
 type Configuration struct {
 	Sources []*Source `toml:"source"`
+	Target  struct {
+		Path string `toml:"path"`
+	} `toml:"target"`
 }
 
 func readConfig() (*Configuration, error) {

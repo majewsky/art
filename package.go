@@ -18,17 +18,65 @@
 
 package main
 
-//Package is satisfied by types HoloBuildPackage and NativePackage.
+import (
+	"bytes"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+)
+
+//Package is a package definition. It is satisfied by types HoloBuildPackage
+//and NativePackage.
 type Package interface {
+	//Build builds this package, stores the resulting package files in
+	//`targetDirPath` and returns a list of their file names.
+	Build(targetDirPath string) ([]string, error)
 }
 
-//HoloBuildPackage is a package that can be built from a package declaration by
-//using holo-build(8).
+//HoloBuildPackage describes a package declaration that can be built by using
+//holo-build(8).
 type HoloBuildPackage struct {
 	Path string
 }
 
-//NativePackage is a package that can be built from a PKGBUILD using makepkg(8).
+//Build implements the Package interface.
+func (pkg HoloBuildPackage) Build(targetDirPath string) ([]string, error) {
+	absPath, err := filepath.Abs(pkg.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	//NOTE: It would be nice if `holo-build` could write the package to the
+	//target directory, and print its name to stdout in a single pass.
+	cmd := exec.Command("holo-build", "--suggest-filename", absPath)
+	cmd.Dir = targetDirPath
+	cmd.Stdin = nil
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+	outputFileName := strings.TrimSpace(string(buf.Bytes()))
+
+	cmd = exec.Command("holo-build", absPath)
+	cmd.Dir = targetDirPath
+	cmd.Stdin = nil
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return []string{outputFileName}, cmd.Run()
+}
+
+//NativePackage describes a directory with a PKGBUILD that can be built using
+//makepkg(8).
 type NativePackage struct {
 	Path string
+}
+
+//Build implements the Package interface.
+func (pkg NativePackage) Build(targetDirPath string) ([]string, error) {
+	//TODO: unimplemented
+	return nil, nil
 }

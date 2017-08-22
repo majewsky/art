@@ -37,18 +37,31 @@ func _main() error {
 		return err
 	}
 
+	progress("Discovering packages...")
 	for _, src := range cfg.Sources {
 		err := src.discoverPackages()
 		if err != nil {
 			return err
 		}
+	}
 
-		fmt.Printf("source: %s\n", src.Path)
+	progress("Building packages...")
+	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
-			fmt.Printf("%#v\n", pkg)
+			fileNames, err := pkg.Build(cfg.Target.Path)
+			if err != nil {
+				return err
+			}
+			_ = fileNames
 		}
 	}
 
-	_ = cfg
 	return nil
+}
+
+func progress(msg string, args ...interface{}) {
+	if len(args) > 0 {
+		msg = fmt.Sprintf(msg, args...)
+	}
+	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m\n", msg)
 }
