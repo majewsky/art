@@ -24,14 +24,20 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 //Package is a package definition. It is satisfied by types HoloBuildPackage
 //and NativePackage.
 type Package interface {
-	//Build builds this package, stores the resulting package files in
-	//`targetDirPath` and returns a list of their file names.
-	Build(targetDirPath string) ([]string, error)
+	//CacheKey returns a string that uniquely idenfities this package.
+	CacheKey() string
+	//LastModified returns the mtime of the package definition file.
+	LastModified() (time.Time, error)
+	//OutputFiles returns the list of files produced by Build(), minus the "
+	OutputFiles() ([]string, error)
+	//Build builds all output files into the given target directory.
+	Build(targetDirPath string) error
 }
 
 //HoloBuildPackage describes a package declaration that can be built by using
@@ -40,33 +46,44 @@ type HoloBuildPackage struct {
 	Path string
 }
 
-//Build implements the Package interface.
-func (pkg HoloBuildPackage) Build(targetDirPath string) ([]string, error) {
-	absPath, err := filepath.Abs(pkg.Path)
-	if err != nil {
-		return nil, err
-	}
+//CacheKey implements the Package interface.
+func (pkg HoloBuildPackage) CacheKey() string {
+	return pkg.Path
+}
 
-	//NOTE: It would be nice if `holo-build` could write the package to the
-	//target directory, and print its name to stdout in a single pass.
-	cmd := exec.Command("holo-build", "--suggest-filename", absPath)
-	cmd.Dir = targetDirPath
+//LastModified implements the Package interface.
+func (pkg HoloBuildPackage) LastModified() (time.Time, error) {
+	fi, err := os.Stat(pkg.Path)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return fi.ModTime(), nil
+}
+
+//OutputFiles implements the Package interface.
+func (pkg HoloBuildPackage) OutputFiles() ([]string, error) {
+	cmd := exec.Command("holo-build", "--suggest-filename", pkg.Path)
 	cmd.Stdin = nil
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-	outputFileName := strings.TrimSpace(string(buf.Bytes()))
+	err := cmd.Run()
+	return []string{strings.TrimSpace(string(buf.Bytes()))}, err
+}
 
-	cmd = exec.Command("holo-build", absPath)
+//Build implements the Package interface.
+func (pkg HoloBuildPackage) Build(targetDirPath string) error {
+	absPath, err := filepath.Abs(pkg.Path)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("holo-build", absPath)
 	cmd.Dir = targetDirPath
 	cmd.Stdin = nil
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return []string{outputFileName}, cmd.Run()
+	return cmd.Run()
 }
 
 //NativePackage describes a directory with a PKGBUILD that can be built using
@@ -75,8 +92,53 @@ type NativePackage struct {
 	Path string
 }
 
+//CacheKey implements the Package interface.
+func (pkg NativePackage) CacheKey() string {
+	return pkg.Path
+}
+
+//LastModified implements the Package interface.
+func (pkg NativePackage) LastModified() (time.Time, error) {
+	fi, err := os.Stat(filepath.Join(pkg.Path, "PKGBUILD"))
+	if err != nil {
+		return time.Time{}, err
+	}
+	return fi.ModTime(), nil
+}
+
+//OutputFiles implements the Package interface.
+func (pkg NativePackage) OutputFiles() ([]string, error) {
+	cmd := exec.Command("makepkg", "--packagelist")
+	cmd.Dir = pkg.Path
+	cmd.Stdin = nil
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []string
+	for _, line := range strings.Split(string(buf.Bytes()), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		result = append(result, line+".pkg.tar.xz")
+	}
+	return result, nil
+}
+
 //Build implements the Package interface.
-func (pkg NativePackage) Build(targetDirPath string) ([]string, error) {
-	//TODO: unimplemented
-	return nil, nil
+func (pkg NativePackage) Build(targetDirPath string) error {
+	cmd := exec.Command("makepkg", "-s")
+	cmd.Dir = pkg.Path
+	cmd.Stdin = nil
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(),
+		"PKGDEST="+targetDirPath,
+	)
+	return cmd.Run()
 }

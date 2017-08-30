@@ -24,39 +24,65 @@ import (
 )
 
 func main() {
-	err := _main()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
-	}
+	os.Exit(_main())
 }
 
-func _main() error {
+func _main() (exitCode int) {
 	cfg, err := readConfig()
 	if err != nil {
-		return err
+		showError(err)
+		return 1
+	}
+
+	cache, err := readCache()
+	if err != nil {
+		showError(err)
+		return 1
 	}
 
 	progress("Discovering packages...")
 	for _, src := range cfg.Sources {
 		err := src.discoverPackages()
 		if err != nil {
-			return err
+			showError(err)
+			exitCode = 1
 		}
+	}
+
+	if exitCode > 0 {
+		return
 	}
 
 	progress("Building packages...")
 	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
-			fileNames, err := pkg.Build(cfg.Target.Path)
+			err := Build(pkg, cache, cfg.Target.Path)
 			if err != nil {
-				return err
+				showError(err)
+				exitCode = 1
 			}
-			_ = fileNames
+			step()
 		}
 	}
+	done()
 
-	return nil
+	err = cache.writeCache()
+	if err != nil {
+		showError(err)
+		exitCode = 1
+	}
+
+	if exitCode > 0 {
+		return
+	}
+
+	return
+}
+
+func showError(err error) {
+	if err != nil {
+		fmt.Printf("\x1B[1;31m!! \x1B[0;31m%s\x1B[0m\n", err.Error())
+	}
 }
 
 func progress(msg string, args ...interface{}) {
@@ -64,4 +90,12 @@ func progress(msg string, args ...interface{}) {
 		msg = fmt.Sprintf(msg, args...)
 	}
 	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m\n", msg)
+}
+
+func step() {
+	fmt.Printf("\x1B[0;36m.\x1B[0m")
+}
+
+func done() {
+	fmt.Printf("\n")
 }

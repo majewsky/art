@@ -3,3 +3,4 @@ build/
 .gopath/pkg/
 
 art.toml
+.art-cache
