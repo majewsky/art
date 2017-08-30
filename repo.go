@@ -18,25 +18,8 @@
 
 package main
 
-import (
-	"io/ioutil"
-
-	toml "github.com/BurntSushi/toml"
-)
-
-//Configuration is the contents of the configuration file.
-type Configuration struct {
-	Sources []*Source  `toml:"source"`
-	Target  Repository `toml:"target"`
-}
-
-func readConfig() (*Configuration, error) {
-	bytes, err := ioutil.ReadFile("./art.toml")
-	if err != nil {
-		return nil, err
-	}
-
-	var cfg Configuration
-	err = toml.Unmarshal(bytes, &cfg)
-	return &cfg, err
+//Repository represents a directory containing package files.
+type Repository struct {
+	Name string `toml:"name"`
+	Path string `toml:"path"`
 }
