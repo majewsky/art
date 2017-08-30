@@ -55,6 +55,7 @@ func _main() (exitCode int) {
 		}
 		step()
 	}
+	done()
 
 	if exitCode > 0 {
 		return
@@ -82,6 +83,27 @@ func _main() (exitCode int) {
 	if exitCode > 0 {
 		return
 	}
+
+	progress("Post-processing and signing packages")
+	var allOutputFiles []string
+	for _, src := range cfg.Sources {
+		for _, pkg := range src.Packages {
+			files, err := cache.AddMissingSignatures(pkg, cfg.Target.Path, mcfg)
+			if err != nil {
+				showError(err)
+				exitCode = 1
+			}
+			allOutputFiles = append(allOutputFiles, files...)
+			step()
+		}
+	}
+	done()
+	if exitCode > 0 {
+		return
+	}
+
+	//TODO: create/update repo metadata
+	//TODO: remove all package files (and sigs) not in allOutputFiles
 
 	return
 }

@@ -18,7 +18,10 @@
 
 package main
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 //Returns true if the two times differ by less than a second.
 func fuzzyTimeEqual(t1 time.Time, t2 time.Time) bool {
@@ -26,4 +29,16 @@ func fuzzyTimeEqual(t1 time.Time, t2 time.Time) bool {
 	unix2 := t2.UnixNano()
 	diff := unix1 - unix2
 	return diff > -1e9 && diff < 1e9
+}
+
+func fileExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	switch {
+	case err == nil:
+		return true, nil
+	case os.IsNotExist(err):
+		return false, nil
+	default:
+		return false, err
+	}
 }

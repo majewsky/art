@@ -34,7 +34,7 @@ type Package interface {
 	CacheKey() string
 	//LastModified returns the mtime of the package definition file.
 	LastModified() (time.Time, error)
-	//OutputFiles returns the list of files produced by Build(), minus the "
+	//OutputFiles returns the list of files produced by Build().
 	OutputFiles() ([]string, error)
 	//Build builds all output files into the given target directory.
 	Build(targetDirPath string) error

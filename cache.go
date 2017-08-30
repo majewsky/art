@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -90,6 +91,8 @@ func (c Cache) GetEntryFor(pkg Package) (CacheEntry, error) {
 	return entry, nil
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 //Build performs (if needed) the build of the given package into the given
 //target directory.
 func (c Cache) Build(pkg Package, targetDirPath string) error {
@@ -134,4 +137,48 @@ func (c Cache) Build(pkg Package, targetDirPath string) error {
 	}
 
 	return pkg.Build(targetDirPath)
+}
+
+//AddMissingSignatures adds signature files to all output files that do not
+//have one yet. It returns a list of the names of all output files.
+func (c Cache) AddMissingSignatures(pkg Package, targetDirPath string, mcfg MakepkgConfig) ([]string, error) {
+	entry, err := c.GetEntryFor(pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	if mcfg.GPGKeyID != "" {
+		for _, fileName := range entry.OutputFiles {
+			path := filepath.Join(targetDirPath, fileName)
+			outputExists, err := fileExists(path)
+			if err != nil {
+				return nil, err
+			}
+			if !outputExists {
+				continue
+			}
+
+			signatureExists, err := fileExists(path + ".sig")
+			if err != nil {
+				return nil, err
+			}
+			if signatureExists {
+				continue
+			}
+			cmd := exec.Command(
+				"gpg", "--detach-sign", "--use-agent",
+				"-u", mcfg.GPGKeyID,
+				"--no-armor", path,
+			)
+			cmd.Stdin = nil
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			err = cmd.Run()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return entry.OutputFiles, nil
 }
