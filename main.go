@@ -33,6 +33,12 @@ func _main() (exitCode int) {
 		showError(err)
 		return 1
 	}
+	mcfg, err := readMakepkgConfig()
+	if err != nil {
+		showError(err)
+		return 1
+	}
+	fmt.Printf("mcfg = %#v\n", mcfg)
 
 	cache, err := readCache()
 	if err != nil {
@@ -40,23 +46,24 @@ func _main() (exitCode int) {
 		return 1
 	}
 
-	progress("Discovering packages...")
+	progress("Discovering packages")
 	for _, src := range cfg.Sources {
-		err := src.discoverPackages()
+		err := src.discoverPackages(mcfg)
 		if err != nil {
 			showError(err)
 			exitCode = 1
 		}
+		step()
 	}
 
 	if exitCode > 0 {
 		return
 	}
 
-	progress("Building packages...")
+	progress("Building packages")
 	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
-			err := Build(pkg, cache, cfg.Target.Path)
+			err := cache.Build(pkg, cfg.Target.Path)
 			if err != nil {
 				showError(err)
 				exitCode = 1
@@ -89,7 +96,7 @@ func progress(msg string, args ...interface{}) {
 	if len(args) > 0 {
 		msg = fmt.Sprintf(msg, args...)
 	}
-	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m\n", msg)
+	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m", msg)
 }
 
 func step() {

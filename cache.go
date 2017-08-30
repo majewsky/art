@@ -20,8 +20,10 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -72,7 +74,7 @@ func (c Cache) GetEntryFor(pkg Package) (CacheEntry, error) {
 	if err != nil {
 		return CacheEntry{}, err
 	}
-	if exists && entry.LastModified.Equal(mtime) {
+	if exists && fuzzyTimeEqual(entry.LastModified, mtime) {
 		return entry, nil
 	}
 
@@ -86,4 +88,50 @@ func (c Cache) GetEntryFor(pkg Package) (CacheEntry, error) {
 
 	c[pkg.CacheKey()] = entry
 	return entry, nil
+}
+
+//Build performs (if needed) the build of the given package into the given
+//target directory.
+func (c Cache) Build(pkg Package, targetDirPath string) error {
+	entry, err := c.GetEntryFor(pkg)
+	if err != nil {
+		return err
+	}
+
+	var (
+		alreadyBuilt = false
+		needsBuild   = false
+	)
+
+	for _, fileName := range entry.OutputFiles {
+		fi, err := os.Stat(filepath.Join(targetDirPath, fileName))
+		switch {
+		case err == nil:
+			if fi.ModTime().After(entry.LastModified) {
+				alreadyBuilt = true
+			} else {
+				return fmt.Errorf(
+					"refusing to build %s: target file exists and is older than package definition",
+					fileName,
+				)
+			}
+		case os.IsNotExist(err):
+			needsBuild = true
+		default:
+			return err
+		}
+	}
+
+	if alreadyBuilt && needsBuild {
+		return fmt.Errorf(
+			"cannot build package: some of %v exist at target, but some do not",
+			entry.OutputFiles,
+		)
+	}
+
+	if !needsBuild {
+		return nil
+	}
+
+	return pkg.Build(targetDirPath)
 }

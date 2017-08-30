@@ -31,7 +31,7 @@ type Source struct {
 	Packages []Package `toml:"-"`
 }
 
-func (s *Source) discoverPackages() error {
+func (s *Source) discoverPackages(mcfg MakepkgConfig) error {
 	dir, err := os.Open(s.Path)
 	if err != nil {
 		return err
@@ -55,13 +55,19 @@ func (s *Source) discoverPackages() error {
 				return err
 			}
 			if isRegularOrSymlink(fi2.Mode()) {
-				s.Packages = append(s.Packages, &NativePackage{Path: pkgPath})
+				s.Packages = append(s.Packages, &NativePackage{
+					Path:          pkgPath,
+					MakepkgConfig: mcfg,
+				})
 			}
 		}
 
 		//regular file or symlink: is a holo-build package if suffix ".pkg.toml"
 		if isRegularOrSymlink(fi.Mode()) && strings.HasSuffix(pkgPath, ".pkg.toml") {
-			s.Packages = append(s.Packages, &HoloBuildPackage{Path: pkgPath})
+			s.Packages = append(s.Packages, &HoloBuildPackage{
+				Path:          pkgPath,
+				MakepkgConfig: mcfg,
+			})
 		}
 	}
 

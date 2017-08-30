@@ -43,7 +43,8 @@ type Package interface {
 //HoloBuildPackage describes a package declaration that can be built by using
 //holo-build(8).
 type HoloBuildPackage struct {
-	Path string
+	Path          string
+	MakepkgConfig MakepkgConfig
 }
 
 //CacheKey implements the Package interface.
@@ -68,7 +69,8 @@ func (pkg HoloBuildPackage) OutputFiles() ([]string, error) {
 	cmd.Stdout = &buf
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
-	return []string{strings.TrimSpace(string(buf.Bytes()))}, err
+	result := []string{strings.TrimSpace(string(buf.Bytes()))}
+	return pkg.MakepkgConfig.FilterFilesForCurrentArch(result), err
 }
 
 //Build implements the Package interface.
@@ -89,7 +91,8 @@ func (pkg HoloBuildPackage) Build(targetDirPath string) error {
 //NativePackage describes a directory with a PKGBUILD that can be built using
 //makepkg(8).
 type NativePackage struct {
-	Path string
+	Path          string
+	MakepkgConfig MakepkgConfig
 }
 
 //CacheKey implements the Package interface.
@@ -127,7 +130,7 @@ func (pkg NativePackage) OutputFiles() ([]string, error) {
 		}
 		result = append(result, line+".pkg.tar.xz")
 	}
-	return result, nil
+	return pkg.MakepkgConfig.FilterFilesForCurrentArch(result), nil
 }
 
 //Build implements the Package interface.
