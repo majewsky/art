@@ -19,6 +19,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"os"
 	"time"
 )
@@ -41,4 +43,9 @@ func fileExists(path string) (bool, error) {
 	default:
 		return false, err
 	}
+}
+
+func md5digest(buf []byte) string {
+	s := md5.Sum(buf)
+	return hex.EncodeToString(s[:])
 }

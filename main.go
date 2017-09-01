@@ -103,9 +103,19 @@ func _main() (exitCode int) {
 
 	ok := cfg.Target.addNewPackages(allOutputFiles)
 	if !ok {
+		exitCode = 1
 		return
 	}
-	//TODO: remove all package files (and sigs (and metadata entries)) not in allOutputFiles
+	ok = cfg.Target.pruneMetadata(allOutputFiles)
+	if !ok {
+		exitCode = 1
+		return
+	}
+	ok = cfg.Target.prunePackages(allOutputFiles)
+	if !ok {
+		exitCode = 1
+		return
+	}
 
 	return
 }

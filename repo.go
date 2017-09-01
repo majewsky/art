@@ -21,8 +21,6 @@ package main
 import (
 	"archive/tar"
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -45,8 +43,9 @@ func (r Repository) FileName() string {
 
 //RepositoryEntry represents an entry for a package in a repo metadata archive.
 type RepositoryEntry struct {
-	FileName  string
-	MD5Digest string
+	PackageName string
+	FileName    string
+	MD5Digest   string
 }
 
 func (r Repository) readMetadata() ([]RepositoryEntry, error) {
@@ -123,6 +122,8 @@ func readMetadataEntry(h *tar.Header, r io.Reader) (ok bool, entry RepositoryEnt
 		}
 
 		switch currentField {
+		case "%NAME%":
+			entry.PackageName = line
 		case "%FILENAME%":
 			entry.FileName = line
 		case "%MD5SUM%":
@@ -172,7 +173,7 @@ func (r Repository) addNewPackages(allOutputFiles []string) (ok bool) {
 		return true
 	}
 
-	cmd := exec.Command("repo-add", append([]string{r.FileName()}, newOutputFiles...)...)
+	cmd := exec.Command("repo-add", append([]string{"-R", r.FileName()}, newOutputFiles...)...)
 	cmd.Dir = r.Path
 	cmd.Stdin = nil
 	cmd.Stdout = os.Stdout
@@ -182,7 +183,77 @@ func (r Repository) addNewPackages(allOutputFiles []string) (ok bool) {
 	return err == nil
 }
 
-func md5digest(buf []byte) string {
-	s := md5.Sum(buf)
-	return hex.EncodeToString(s[:])
+func (r Repository) pruneMetadata(allOutputFiles []string) (ok bool) {
+	progress("Removing old entries from repo metadata...\n")
+
+	//get existing entries
+	entries, err := r.readMetadata()
+	if err != nil {
+		showError(err)
+		return false
+	}
+
+	//collect all entries that do not match a current output file
+	isOutputFile := make(map[string]bool, len(allOutputFiles))
+	for _, fileName := range allOutputFiles {
+		isOutputFile[fileName] = true
+	}
+	var entriesToDelete []string
+	for _, entry := range entries {
+		if !isOutputFile[entry.FileName] {
+			entriesToDelete = append(entriesToDelete, entry.PackageName)
+		}
+	}
+
+	if len(entriesToDelete) == 0 {
+		return true
+	}
+
+	cmd := exec.Command("repo-remove", append([]string{r.FileName()}, entriesToDelete...)...)
+	cmd.Dir = r.Path
+	cmd.Stdin = nil
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	showError(err)
+	return err == nil
+}
+
+func (r Repository) prunePackages(allOutputFiles []string) (ok bool) {
+	progress("Removing old packages from target directory")
+
+	isOutputFile := make(map[string]bool, len(allOutputFiles))
+	for _, fileName := range allOutputFiles {
+		isOutputFile[fileName] = true
+	}
+
+	dir, err := os.Open(r.Path)
+	if err != nil {
+		showError(err)
+		return false
+	}
+	names, err := dir.Readdirnames(-1)
+	if err != nil {
+		showError(err)
+		return false
+	}
+
+	ok = true
+	for _, fileName := range names {
+		if !strings.HasSuffix(fileName, ".pkg.tar.xz") {
+			continue
+		}
+		step()
+
+		if !isOutputFile[fileName] {
+			err := os.Remove(filepath.Join(r.Path, fileName))
+			if err != nil {
+				showError(err)
+				ok = false
+			}
+		}
+	}
+
+	done()
+	return
 }
