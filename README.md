@@ -34,8 +34,8 @@ For each source in this configuration file, the following globs will be expanded
 * `$SOURCE_PATH/*/PKGBUILD` will be built with [makepkg(8)](https://www.archlinux.org/pacman/makepkg.8.html).
 * `$SOURCE_PATH/*.pkg.toml` will be built with [holo-build(8)](https://github.com/holocm/holo-build).
 
-Any PKGBUILD file must be in a direct subdirectory of the source path specified in the configuration file. Note that
-directories will not be traversed any deeper than that. 
+All desired PKGBUILD files must be in a direct subdirectory of the source path specified in the configuration file. 
+Directories will not be traversed any deeper than that. 
 
 The packages produced will be stored in the `target.path`. The `target.name` defines the file name of the
 repository metadata archive. In the example above, it will be at `/path/to/output/my-packages.db.tar.xz`, so Pacman
