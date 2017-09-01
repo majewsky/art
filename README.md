@@ -3,7 +3,7 @@
 This is ART. Please do not throw it away. :)
 
 ART builds a package repository for Arch Linux. It ties together the standard tools (`makepkg`, `repo-add` and
-`repo-remove`) into a workflow that is quicker and more robust than when you glued the same tools together with
+`repo-remove`) into a workflow that is quicker and more robust than when you just glue these tools together with
 Makefiles or shell scripts.
 
 ## Installation
