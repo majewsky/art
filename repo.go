@@ -220,7 +220,7 @@ func (r Repository) pruneMetadata(allOutputFiles []string) (ok bool) {
 }
 
 func (r Repository) prunePackages(allOutputFiles []string) (ok bool) {
-	progress("Removing old packages from target directory")
+	progress("Removing old files from target directory")
 
 	isOutputFile := make(map[string]bool, len(allOutputFiles))
 	for _, fileName := range allOutputFiles {
@@ -239,14 +239,15 @@ func (r Repository) prunePackages(allOutputFiles []string) (ok bool) {
 	}
 
 	ok = true
-	for _, fileName := range names {
+	for _, fullFileName := range names {
+		fileName := strings.TrimSuffix(fullFileName, ".sig")
 		if !strings.HasSuffix(fileName, ".pkg.tar.xz") {
 			continue
 		}
 		step()
 
 		if !isOutputFile[fileName] {
-			err := os.Remove(filepath.Join(r.Path, fileName))
+			err := os.Remove(filepath.Join(r.Path, fullFileName))
 			if err != nil {
 				showError(err)
 				ok = false
