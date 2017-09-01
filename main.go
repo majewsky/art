@@ -38,7 +38,6 @@ func _main() (exitCode int) {
 		showError(err)
 		return 1
 	}
-	fmt.Printf("mcfg = %#v\n", mcfg)
 
 	cache, err := readCache()
 	if err != nil {
@@ -102,8 +101,11 @@ func _main() (exitCode int) {
 		return
 	}
 
-	//TODO: create/update repo metadata
-	//TODO: remove all package files (and sigs) not in allOutputFiles
+	ok := cfg.Target.addNewPackages(allOutputFiles)
+	if !ok {
+		return
+	}
+	//TODO: remove all package files (and sigs (and metadata entries)) not in allOutputFiles
 
 	return
 }
