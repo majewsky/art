@@ -19,6 +19,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	toml "github.com/BurntSushi/toml"
@@ -38,5 +39,19 @@ func readConfig() (*Configuration, error) {
 
 	var cfg Configuration
 	err = toml.Unmarshal(bytes, &cfg)
-	return &cfg, err
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.Target.Path == "" {
+		return nil, fmt.Errorf("parse art.toml: missing value for target.path")
+	}
+	if cfg.Target.Name == "" {
+		return nil, fmt.Errorf("parse art.toml: missing value for target.name")
+	}
+	if len(cfg.Sources) == 0 {
+		return nil, fmt.Errorf("parse art.toml: no sources specified")
+	}
+
+	return &cfg, nil
 }
