@@ -19,6 +19,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 
@@ -44,13 +45,18 @@ func readConfig() (*Configuration, error) {
 	}
 
 	if cfg.Target.Path == "" {
-		return nil, fmt.Errorf("parse art.toml: missing value for target.path")
+		return nil, errors.New("parse art.toml: missing value for target.path")
 	}
 	if cfg.Target.Name == "" {
-		return nil, fmt.Errorf("parse art.toml: missing value for target.name")
+		return nil, errors.New("parse art.toml: missing value for target.name")
 	}
 	if len(cfg.Sources) == 0 {
-		return nil, fmt.Errorf("parse art.toml: no sources specified")
+		return nil, errors.New("parse art.toml: no sources specified")
+	}
+	for idx, src := range cfg.Sources {
+		if src.Path == "" {
+			return nil, fmt.Errorf("parse art.toml: missing value for sources[%d].path", idx)
+		}
 	}
 
 	return &cfg, nil
