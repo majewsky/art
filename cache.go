@@ -30,30 +30,35 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-//CacheEntry contains metadata for a Package instance that is held in the Cache.
-type CacheEntry struct {
+//PackageCacheEntry contains metadata for a Package instance that is held in the Cache.
+type PackageCacheEntry struct {
 	LastModified time.Time
 	OutputFiles  []string
 }
 
 //Cache contains metadata for a number of Package instances.
-type Cache map[string]CacheEntry
+type Cache struct {
+	Packages map[string]PackageCacheEntry `toml:"package"`
+}
 
 const (
 	cachePath = ".art-cache"
 )
 
 func readCache() (Cache, error) {
+	c := Cache{
+		Packages: make(map[string]PackageCacheEntry),
+	}
+
 	bytes, err := ioutil.ReadFile(cachePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			//acceptable, e.g. on first run; start with empty cache
-			return make(Cache), nil
+			return c, nil
 		}
-		return nil, err
+		return c, err
 	}
 
-	c := make(Cache)
 	err = toml.Unmarshal(bytes, &c)
 	return c, err
 }
@@ -67,27 +72,27 @@ func (c Cache) writeCache() error {
 	return ioutil.WriteFile(cachePath, buf.Bytes(), 0644)
 }
 
-//GetEntryFor retrieves (or creates) a cache entry for the given Package.
-func (c Cache) GetEntryFor(pkg Package) (CacheEntry, error) {
-	entry, exists := c[pkg.CacheKey()]
+//GetEntryForPackage retrieves (or creates) a cache entry for the given Package.
+func (c Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
+	entry, exists := c.Packages[pkg.CacheKey()]
 
 	mtime, err := pkg.LastModified()
 	if err != nil {
-		return CacheEntry{}, err
+		return PackageCacheEntry{}, err
 	}
 	if exists && fuzzyTimeEqual(entry.LastModified, mtime) {
 		return entry, nil
 	}
 
-	entry = CacheEntry{
+	entry = PackageCacheEntry{
 		LastModified: mtime,
 	}
 	entry.OutputFiles, err = pkg.OutputFiles()
 	if err != nil {
-		return CacheEntry{}, err
+		return PackageCacheEntry{}, err
 	}
 
-	c[pkg.CacheKey()] = entry
+	c.Packages[pkg.CacheKey()] = entry
 	return entry, nil
 }
 
@@ -96,7 +101,7 @@ func (c Cache) GetEntryFor(pkg Package) (CacheEntry, error) {
 //Build performs (if needed) the build of the given package into the given
 //target directory.
 func (c Cache) Build(pkg Package, targetDirPath string) error {
-	entry, err := c.GetEntryFor(pkg)
+	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
 		return err
 	}
@@ -142,7 +147,7 @@ func (c Cache) Build(pkg Package, targetDirPath string) error {
 //AddMissingSignatures adds signature files to all output files that do not
 //have one yet. It returns a list of the names of all output files.
 func (c Cache) AddMissingSignatures(pkg Package, targetDirPath string, mcfg MakepkgConfig) ([]string, error) {
-	entry, err := c.GetEntryFor(pkg)
+	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
 		return nil, err
 	}

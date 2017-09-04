@@ -9,7 +9,7 @@ all: FORCE
 	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)'
 
 install: FORCE all
-	install -D -m 0755 build/gofu "$(DESTDIR)$(PREFIX)/bin/gofu"
+	install -D -m 0755 build/art "$(DESTDIR)$(PREFIX)/bin/art"
 
 vendor: FORCE
 	@# vendoring by https://github.com/holocm/golangvend
