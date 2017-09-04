@@ -45,6 +45,7 @@ type OutputCacheEntry struct {
 type Cache struct {
 	Packages    map[string]PackageCacheEntry `toml:"package"`
 	OutputFiles map[string]OutputCacheEntry  `toml:"output"`
+	Changed     bool                         `toml:"-"`
 }
 
 const (
@@ -67,10 +68,16 @@ func readCache() (*Cache, error) {
 	}
 
 	err = toml.Unmarshal(bytes, c)
+	c.Changed = false
 	return c, err
 }
 
 func (c *Cache) writeCache() error {
+	if !c.Changed {
+		return nil
+	}
+	c.Changed = false //since we're writing it now
+
 	var buf bytes.Buffer
 	err := toml.NewEncoder(&buf).Encode(c)
 	if err != nil {
@@ -100,6 +107,7 @@ func (c *Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
 	}
 
 	c.Packages[pkg.CacheKey()] = entry
+	c.Changed = true
 	return entry, nil
 }
 
@@ -120,6 +128,7 @@ func (c *Cache) GetEntryForOutputFile(path string) (OutputCacheEntry, error) {
 		MD5Digest: md5digest(buf),
 	}
 	c.OutputFiles[baseName] = entry
+	c.Changed = true
 	return entry, nil
 }
 
