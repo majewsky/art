@@ -36,18 +36,25 @@ type PackageCacheEntry struct {
 	OutputFiles  []string
 }
 
+//OutputCacheEntry contains metadata for an output file that is held in the Cache.
+type OutputCacheEntry struct {
+	MD5Digest string
+}
+
 //Cache contains metadata for a number of Package instances.
 type Cache struct {
-	Packages map[string]PackageCacheEntry `toml:"package"`
+	Packages    map[string]PackageCacheEntry `toml:"package"`
+	OutputFiles map[string]OutputCacheEntry  `toml:"output"`
 }
 
 const (
 	cachePath = ".art-cache"
 )
 
-func readCache() (Cache, error) {
-	c := Cache{
-		Packages: make(map[string]PackageCacheEntry),
+func readCache() (*Cache, error) {
+	c := &Cache{
+		Packages:    make(map[string]PackageCacheEntry),
+		OutputFiles: make(map[string]OutputCacheEntry),
 	}
 
 	bytes, err := ioutil.ReadFile(cachePath)
@@ -56,14 +63,14 @@ func readCache() (Cache, error) {
 			//acceptable, e.g. on first run; start with empty cache
 			return c, nil
 		}
-		return c, err
+		return nil, err
 	}
 
-	err = toml.Unmarshal(bytes, &c)
+	err = toml.Unmarshal(bytes, c)
 	return c, err
 }
 
-func (c Cache) writeCache() error {
+func (c *Cache) writeCache() error {
 	var buf bytes.Buffer
 	err := toml.NewEncoder(&buf).Encode(c)
 	if err != nil {
@@ -73,7 +80,7 @@ func (c Cache) writeCache() error {
 }
 
 //GetEntryForPackage retrieves (or creates) a cache entry for the given Package.
-func (c Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
+func (c *Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
 	entry, exists := c.Packages[pkg.CacheKey()]
 
 	mtime, err := pkg.LastModified()
@@ -96,11 +103,31 @@ func (c Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
 	return entry, nil
 }
 
+//GetEntryForOutputFile retrieves (or creates) a cache entry for the given output file.
+func (c *Cache) GetEntryForOutputFile(path string) (OutputCacheEntry, error) {
+	baseName := filepath.Base(path)
+	entry, exists := c.OutputFiles[baseName]
+	if exists {
+		return entry, nil
+	}
+
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		return OutputCacheEntry{}, err
+	}
+
+	entry = OutputCacheEntry{
+		MD5Digest: md5digest(buf),
+	}
+	c.OutputFiles[baseName] = entry
+	return entry, nil
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 //Build performs (if needed) the build of the given package into the given
 //target directory.
-func (c Cache) Build(pkg Package, targetDirPath string) error {
+func (c *Cache) Build(pkg Package, targetDirPath string) error {
 	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
 		return err
@@ -146,7 +173,7 @@ func (c Cache) Build(pkg Package, targetDirPath string) error {
 
 //AddMissingSignatures adds signature files to all output files that do not
 //have one yet. It returns a list of the names of all output files.
-func (c Cache) AddMissingSignatures(pkg Package, targetDirPath string, mcfg MakepkgConfig) ([]string, error) {
+func (c *Cache) AddMissingSignatures(pkg Package, targetDirPath string, mcfg MakepkgConfig) ([]string, error) {
 	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
 		return nil, err

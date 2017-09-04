@@ -101,10 +101,15 @@ func _main() (exitCode int) {
 		return
 	}
 
-	ok := cfg.Target.addNewPackages(allOutputFiles)
+	ok := cfg.Target.addNewPackages(allOutputFiles, cache)
 	if !ok {
 		exitCode = 1
 		return
+	}
+	err = cache.writeCache() //since the previous call might have changed it
+	if err != nil {
+		showError(err)
+		exitCode = 1
 	}
 	ok = cfg.Target.pruneMetadata(allOutputFiles)
 	if !ok {

@@ -134,7 +134,7 @@ func readMetadataEntry(h *tar.Header, r io.Reader) (ok bool, entry RepositoryEnt
 	return
 }
 
-func (r Repository) addNewPackages(allOutputFiles []string) (ok bool) {
+func (r Repository) addNewPackages(allOutputFiles []string, c *Cache) (ok bool) {
 	progress("Adding new packages to repository")
 
 	//get existing entries
@@ -158,12 +158,12 @@ func (r Repository) addNewPackages(allOutputFiles []string) (ok bool) {
 			continue
 		}
 
-		buf, err := ioutil.ReadFile(filepath.Join(r.Path, fileName))
+		cacheEntry, err := c.GetEntryForOutputFile(filepath.Join(r.Path, fileName))
 		if err != nil {
 			showError(err)
 			return false
 		}
-		if entry.MD5Digest != md5digest(buf) {
+		if entry.MD5Digest != cacheEntry.MD5Digest {
 			newOutputFiles = append(newOutputFiles, fileName)
 		}
 	}
