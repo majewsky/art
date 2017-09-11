@@ -134,13 +134,14 @@ func readMetadataEntry(h *tar.Header, r io.Reader) (ok bool, entry RepositoryEnt
 	return
 }
 
-func (r Repository) addNewPackages(allOutputFiles []string, c *Cache) (ok bool) {
-	progress("Adding new packages to repository")
+func (r Repository) addNewPackages(allOutputFiles []string, c *Cache, ui *UI) (ok bool) {
+	ui.SetCurrentTask("Adding new packages to repository", uint(len(allOutputFiles)))
+	defer ui.EndTask()
 
 	//get existing entries
 	entries, err := r.readMetadata()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return false
 	}
 	entryByFilename := make(map[string]RepositoryEntry, len(entries))
@@ -151,7 +152,7 @@ func (r Repository) addNewPackages(allOutputFiles []string, c *Cache) (ok bool) 
 	//which files need to be added?
 	var newOutputFiles []string
 	for _, fileName := range allOutputFiles {
-		step()
+		ui.StepTask()
 		entry, exists := entryByFilename[fileName]
 		if !exists {
 			newOutputFiles = append(newOutputFiles, fileName)
@@ -160,14 +161,13 @@ func (r Repository) addNewPackages(allOutputFiles []string, c *Cache) (ok bool) 
 
 		cacheEntry, err := c.GetEntryForOutputFile(filepath.Join(r.Path, fileName))
 		if err != nil {
-			showError(err)
+			ui.ShowError(err)
 			return false
 		}
 		if entry.MD5Digest != cacheEntry.MD5Digest {
 			newOutputFiles = append(newOutputFiles, fileName)
 		}
 	}
-	done()
 
 	if len(newOutputFiles) == 0 {
 		return true
@@ -179,17 +179,18 @@ func (r Repository) addNewPackages(allOutputFiles []string, c *Cache) (ok bool) 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
-	showError(err)
+	ui.ShowError(err)
 	return err == nil
 }
 
-func (r Repository) pruneMetadata(allOutputFiles []string) (ok bool) {
-	progress("Removing old entries from repo metadata...\n")
+func (r Repository) pruneMetadata(allOutputFiles []string, ui *UI) (ok bool) {
+	ui.SetCurrentTask("Removing old entries from repo metadata", 1)
+	defer ui.EndTask()
 
 	//get existing entries
 	entries, err := r.readMetadata()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return false
 	}
 
@@ -215,13 +216,11 @@ func (r Repository) pruneMetadata(allOutputFiles []string) (ok bool) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
-	showError(err)
+	ui.ShowError(err)
 	return err == nil
 }
 
-func (r Repository) prunePackages(allOutputFiles []string) (ok bool) {
-	progress("Removing old files from target directory")
-
+func (r Repository) prunePackages(allOutputFiles []string, ui *UI) (ok bool) {
 	isOutputFile := make(map[string]bool, len(allOutputFiles))
 	for _, fileName := range allOutputFiles {
 		isOutputFile[fileName] = true
@@ -229,32 +228,39 @@ func (r Repository) prunePackages(allOutputFiles []string) (ok bool) {
 
 	dir, err := os.Open(r.Path)
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return false
 	}
 	names, err := dir.Readdirnames(-1)
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return false
 	}
-
-	ok = true
+	var filenamesToDelete []string
 	for _, fullFileName := range names {
 		fileName := strings.TrimSuffix(fullFileName, ".sig")
-		if !strings.HasSuffix(fileName, ".pkg.tar.xz") {
+		if strings.HasSuffix(fileName, ".pkg.tar.xz") && !isOutputFile[fileName] {
+			filenamesToDelete = append(filenamesToDelete, fullFileName)
 			continue
-		}
-		step()
-
-		if !isOutputFile[fileName] {
-			err := os.Remove(filepath.Join(r.Path, fullFileName))
-			if err != nil {
-				showError(err)
-				ok = false
-			}
 		}
 	}
 
-	done()
+	if len(filenamesToDelete) == 0 {
+		return true
+	}
+
+	ui.SetCurrentTask("Removing old files from target directory", uint(len(filenamesToDelete)))
+	defer ui.EndTask()
+
+	ok = true
+	for _, fileName := range filenamesToDelete {
+		ui.StepTask()
+		err := os.Remove(filepath.Join(r.Path, fileName))
+		if err != nil {
+			ui.ShowError(err)
+			ok = false
+		}
+	}
+
 	return
 }

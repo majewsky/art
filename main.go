@@ -19,7 +19,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -28,54 +27,58 @@ func main() {
 }
 
 func _main() (exitCode int) {
+	ui := &UI{}
+
 	cfg, err := readConfig()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return 1
 	}
 	mcfg, err := readMakepkgConfig()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return 1
 	}
 
 	cache, err := readCache()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		return 1
 	}
 
-	progress("Discovering packages")
+	ui.SetCurrentTask("Discovering packages", uint(len(cfg.Sources)))
+	var totalPackageCount uint
 	for _, src := range cfg.Sources {
 		err := src.discoverPackages(mcfg)
 		if err != nil {
-			showError(err)
+			ui.ShowError(err)
 			exitCode = 1
 		}
-		step()
+		ui.StepTask()
+		totalPackageCount += uint(len(src.Packages))
 	}
-	done()
+	ui.EndTask()
 
 	if exitCode > 0 {
 		return
 	}
 
-	progress("Building packages")
+	ui.SetCurrentTask("Building packages", totalPackageCount)
 	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
 			err := cache.Build(pkg, cfg.Target.Path)
 			if err != nil {
-				showError(err)
+				ui.ShowError(err)
 				exitCode = 1
 			}
-			step()
+			ui.StepTask()
 		}
 	}
-	done()
+	ui.EndTask()
 
 	err = cache.writeCache()
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		exitCode = 1
 	}
 
@@ -83,65 +86,44 @@ func _main() (exitCode int) {
 		return
 	}
 
-	progress("Post-processing and signing packages")
+	ui.SetCurrentTask("Post-processing and signing packages", totalPackageCount)
 	var allOutputFiles []string
 	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
 			files, err := cache.AddMissingSignatures(pkg, cfg.Target.Path, mcfg)
 			if err != nil {
-				showError(err)
+				ui.ShowError(err)
 				exitCode = 1
 			}
 			allOutputFiles = append(allOutputFiles, files...)
-			step()
+			ui.StepTask()
 		}
 	}
-	done()
+	ui.EndTask()
 	if exitCode > 0 {
 		return
 	}
 
-	ok := cfg.Target.addNewPackages(allOutputFiles, cache)
+	ok := cfg.Target.addNewPackages(allOutputFiles, cache, ui)
 	if !ok {
 		exitCode = 1
 		return
 	}
 	err = cache.writeCache() //since the previous call might have changed it
 	if err != nil {
-		showError(err)
+		ui.ShowError(err)
 		exitCode = 1
 	}
-	ok = cfg.Target.pruneMetadata(allOutputFiles)
+	ok = cfg.Target.pruneMetadata(allOutputFiles, ui)
 	if !ok {
 		exitCode = 1
 		return
 	}
-	ok = cfg.Target.prunePackages(allOutputFiles)
+	ok = cfg.Target.prunePackages(allOutputFiles, ui)
 	if !ok {
 		exitCode = 1
 		return
 	}
 
 	return
-}
-
-func showError(err error) {
-	if err != nil {
-		fmt.Printf("\x1B[1;31m!! \x1B[0;31m%s\x1B[0m\n", err.Error())
-	}
-}
-
-func progress(msg string, args ...interface{}) {
-	if len(args) > 0 {
-		msg = fmt.Sprintf(msg, args...)
-	}
-	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m", msg)
-}
-
-func step() {
-	fmt.Printf("\x1B[0;36m.\x1B[0m")
-}
-
-func done() {
-	fmt.Printf("\n")
 }
