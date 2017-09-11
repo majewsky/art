@@ -20,27 +20,61 @@ package main
 
 import "fmt"
 
+//if it looks stupid and works, it ain't stupid
+const clearLine = "\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08"
+
 //UI encapsulates the state of the terminal display.
-type UI struct{}
+type UI struct {
+	task  string
+	step  uint
+	count uint
+}
 
 //ShowError prints the given error if it is not nil.
 func (ui *UI) ShowError(err error) {
 	if err != nil {
-		fmt.Printf("\x1B[1;31m!! \x1B[0;31m%s\x1B[0m\n", err.Error())
+		if ui.task != "" {
+			fmt.Printf("\n")
+		}
+		fmt.Printf("\x1B[1;31m[error] \x1B[0;31m%s\x1B[0m\n", err.Error())
 	}
 }
 
 //SetCurrentTask displays the progress of the next task.
 func (ui *UI) SetCurrentTask(task string, count uint) {
-	fmt.Printf("\x1B[1;36m>> \x1B[0;36m%s\x1B[0m", task)
+	if ui.task != "" {
+		ui.EndTask()
+	}
+	ui.task = task
+	ui.step = 0
+	ui.count = count
+	ui.displayTask()
 }
 
 //StepTask increases the counter on the task.
 func (ui *UI) StepTask() {
-	fmt.Printf("\x1B[0;36m.\x1B[0m")
+	ui.step++
+	ui.displayTask()
 }
 
 //EndTask signals the end of the current task.
 func (ui *UI) EndTask() {
-	fmt.Printf("\n")
+	if ui.task != "" {
+		ui.step = ui.count
+		ui.displayTask()
+		fmt.Printf("\n")
+
+		ui.task = ""
+		ui.step = 0
+		ui.count = 0
+	}
+}
+
+func (ui *UI) displayTask() {
+	fmt.Printf(clearLine)
+	progress := "....."
+	if ui.count > 0 {
+		progress = fmt.Sprintf("%2d/%2d", ui.step, ui.count)
+	}
+	fmt.Printf("\x1B[1;36m[%s] \x1B[0;36m%s\x1B[0m ", progress, ui.task)
 }
