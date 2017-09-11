@@ -1,3 +1,10 @@
+# v1.2 (TBD)
+
+New features:
+
+- The progress display now looks much nicer, and its layout does not break when
+  errors are displayed.
+
 # v1.1 (2017-09-04)
 
 New features:
