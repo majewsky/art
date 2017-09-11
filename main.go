@@ -66,7 +66,7 @@ func _main() (exitCode int) {
 	ui.SetCurrentTask("Building packages", totalPackageCount)
 	for _, src := range cfg.Sources {
 		for _, pkg := range src.Packages {
-			err := cache.Build(pkg, cfg.Target.Path)
+			err := cache.Build(pkg, cfg.Target.Path, ui)
 			if err != nil {
 				ui.ShowError(err)
 				exitCode = 1

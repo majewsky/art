@@ -40,6 +40,17 @@ func (ui *UI) ShowError(err error) {
 	}
 }
 
+//ShowWarning prints the given warning.
+func (ui *UI) ShowWarning(msg string, args ...interface{}) {
+	if ui.task != "" {
+		fmt.Printf("\n")
+	}
+	if len(args) > 0 {
+		msg = fmt.Sprintf(msg, args...)
+	}
+	fmt.Printf("\x1B[1;33m[ warn] \x1B[0;33m%s\x1B[0m\n", msg)
+}
+
 //SetCurrentTask displays the progress of the next task.
 func (ui *UI) SetCurrentTask(task string, count uint) {
 	if ui.task != "" {

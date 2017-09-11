@@ -1,9 +1,12 @@
 # v1.2 (TBD)
 
-New features:
+Changes:
 
 - The progress display now looks much nicer, and its layout does not break when
   errors are displayed.
+- The error that occurred when a target file was newer than its definition has
+  been downgraded to a warning because it can appear in legitimate workflows
+  where it is not an actual problem.
 
 # v1.1 (2017-09-04)
 

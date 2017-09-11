@@ -136,7 +136,7 @@ func (c *Cache) GetEntryForOutputFile(path string) (OutputCacheEntry, error) {
 
 //Build performs (if needed) the build of the given package into the given
 //target directory.
-func (c *Cache) Build(pkg Package, targetDirPath string) error {
+func (c *Cache) Build(pkg Package, targetDirPath string, ui *UI) error {
 	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
 		return err
@@ -151,11 +151,10 @@ func (c *Cache) Build(pkg Package, targetDirPath string) error {
 		fi, err := os.Stat(filepath.Join(targetDirPath, fileName))
 		switch {
 		case err == nil:
-			if fi.ModTime().After(entry.LastModified) {
-				alreadyBuilt = true
-			} else {
-				return fmt.Errorf(
-					"refusing to build %s: target file exists and is older than package definition",
+			alreadyBuilt = true
+			if fi.ModTime().Before(entry.LastModified) {
+				ui.ShowWarning(
+					"not building %s: target file exists and is older than package definition",
 					fileName,
 				)
 			}
