@@ -20,6 +20,7 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -39,6 +40,7 @@ func readMakepkgConfig() (MakepkgConfig, error) {
 	}
 
 	var result MakepkgConfig
+	result.GPGKeyID = os.Getenv("GPGKEY")
 	for _, line := range strings.Split(string(bytes), "\n") {
 		line = strings.TrimSpace(line)
 		match := makepkgFieldRegex.FindStringSubmatch(line)
