@@ -32,6 +32,7 @@ name = "my-packages"
 For each source in this configuration file, the following globs will be expanded to find packages to build:
 
 * `$SOURCE_PATH/*/PKGBUILD` will be built with [makepkg(8)](https://www.archlinux.org/pacman/makepkg.8.html).
+* `$SOURCE_PATH/*.PKGBUILD` will be built with [makepkg(8)](https://www.archlinux.org/pacman/makepkg.8.html) -p.
 * `$SOURCE_PATH/*.pkg.toml` will be built with [holo-build(8)](https://github.com/holocm/holo-build).
 
 Note that directories will not be traversed any deeper than that. For example, any PKGBUILD file must be in a direct
