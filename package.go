@@ -102,7 +102,7 @@ func (pkg NativePackage) CacheKey() string {
 
 //LastModified implements the Package interface.
 func (pkg NativePackage) LastModified() (time.Time, error) {
-	fi, err := os.Stat(filepath.Join(pkg.Path, "PKGBUILD"))
+	fi, err := os.Stat(pkg.Path)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -111,8 +111,8 @@ func (pkg NativePackage) LastModified() (time.Time, error) {
 
 //OutputFiles implements the Package interface.
 func (pkg NativePackage) OutputFiles() ([]string, error) {
-	cmd := exec.Command("makepkg", "--packagelist")
-	cmd.Dir = pkg.Path
+	cmd := exec.Command("makepkg", "--packagelist", "-p", filepath.Base(pkg.Path))
+	cmd.Dir = filepath.Dir(pkg.Path)
 	cmd.Stdin = nil
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
@@ -135,8 +135,8 @@ func (pkg NativePackage) OutputFiles() ([]string, error) {
 
 //Build implements the Package interface.
 func (pkg NativePackage) Build(targetDirPath string) error {
-	cmd := exec.Command("makepkg", "-s")
-	cmd.Dir = pkg.Path
+	cmd := exec.Command("makepkg", "-s", "-p", filepath.Base(pkg.Path))
+	cmd.Dir = filepath.Dir(pkg.Path)
 	cmd.Stdin = nil
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

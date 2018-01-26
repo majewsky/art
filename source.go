@@ -56,10 +56,18 @@ func (s *Source) discoverPackages(mcfg MakepkgConfig) error {
 			}
 			if isRegularOrSymlink(fi2.Mode()) {
 				s.Packages = append(s.Packages, &NativePackage{
-					Path:          pkgPath,
+					Path:          filepath.Join(pkgPath, "PKGBUILD"),
 					MakepkgConfig: mcfg,
 				})
 			}
+		}
+
+		//regular file or symlink: is a package if suffix ".PKGBUILD"
+		if isRegularOrSymlink(fi.Mode()) && strings.HasSuffix(pkgPath, ".PKGBUILD") {
+			s.Packages = append(s.Packages, &NativePackage{
+				Path:          pkgPath,
+				MakepkgConfig: mcfg,
+			})
 		}
 
 		//regular file or symlink: is a holo-build package if suffix ".pkg.toml"
