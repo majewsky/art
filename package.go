@@ -128,7 +128,7 @@ func (pkg NativePackage) OutputFiles() ([]string, error) {
 		if line == "" {
 			continue
 		}
-		result = append(result, line+".pkg.tar.xz")
+		result = append(result, filepath.Base(line))
 	}
 	return pkg.MakepkgConfig.FilterFilesForCurrentArch(result), nil
 }

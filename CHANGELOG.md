@@ -1,3 +1,20 @@
+# v2.0 (TBD)
+
+Breaking changes:
+
+- This release requires Pacman 5.1 or later.
+
+New features:
+
+- Allow `${pkgname}.PKGBUILD` instead of `${pkgname}/PKGBUILD` for
+  directory-less native packages.
+- Allow `GPGKEY` to be set in the environment, like makepkg(1) does.
+
+Bugfixes:
+
+- Fix an issue where native packages would fail to build when Pacman/makepkg is
+  at version 5.1 or later.
+
 # v1.2 (2017-09-11)
 
 Changes:
