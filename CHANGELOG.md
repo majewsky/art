@@ -1,4 +1,4 @@
-# v2.0 (TBD)
+# v2.0 (2018-06-21)
 
 Breaking changes:
 
