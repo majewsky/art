@@ -1,3 +1,10 @@
+# v2.0.2 (TBD)
+
+Bugixes:
+
+- The progress display now works properly on terminals (such as urxvt)
+  that allow you to "backspace" (\x08) past the beginning of the line.
+
 # v2.0.1 (2020-10-06)
 
 Bugfixes:
