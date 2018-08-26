@@ -20,7 +20,8 @@ New features:
 Bugfixes:
 
 - Fix an issue where native packages would fail to build when Pacman/makepkg is
-  at version 5.1 or later.
+  at version 5.1 or later.  If you mistakenly ran ART 1.x with makepkg 5.1, you
+  will need to delete the `.art-cache` in order to build the skipped packages.
 
 # v1.2 (2017-09-11)
 
