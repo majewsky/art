@@ -1,3 +1,10 @@
+# v2.0.1 (TBD)
+
+Bugfixes:
+
+- Fix building of packages that produce zst-compressed packages. Previously,
+  only xz-compressed packages were supported.
+
 # v2.0 (2018-06-21)
 
 Breaking changes:

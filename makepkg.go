@@ -66,6 +66,9 @@ func (cfg MakepkgConfig) FilterFilesForCurrentArch(outputFiles []string) (result
 
 	for _, outputFile := range outputFiles {
 		str := strings.TrimSuffix(outputFile, ".pkg.tar.xz")
+		if strings.HasSuffix(outputFile, ".zst") {
+			str = strings.TrimSuffix(outputFile, ".pkg.tar.zst")
+		}
 		if strings.HasSuffix(str, arch1) || strings.HasSuffix(str, arch2) {
 			result = append(result, outputFile)
 		}
