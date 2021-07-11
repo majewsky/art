@@ -20,9 +20,6 @@ package main
 
 import "fmt"
 
-//if it looks stupid and works, it ain't stupid
-const clearLine = "\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08"
-
 //UI encapsulates the state of the terminal display.
 type UI struct {
 	task  string
@@ -82,10 +79,17 @@ func (ui *UI) EndTask() {
 }
 
 func (ui *UI) displayTask() {
-	fmt.Printf(clearLine)
 	progress := "....."
 	if ui.count > 0 {
 		progress = fmt.Sprintf("%2d/%2d", ui.step, ui.count)
 	}
-	fmt.Printf("\x1B[1;36m[%s] \x1B[0;36m%s\x1B[0m ", progress, ui.task)
+	fmt.Printf(""+
+		"\r"+ // move cursor to beginning of line
+		"\x1B[1;36m"+ // bold ("1") and set the foreground color to cyan ("36")
+		"[%s] "+
+		"\x1B[0;36m"+ // turn off bold: reset ("0"), then turn cyan back on ("36")
+		"%s"+
+		"\x1B[0m"+ // turn off cyan: reset ("0")
+		"\x1B[K", // clear the rest of the line
+		progress, ui.task)
 }

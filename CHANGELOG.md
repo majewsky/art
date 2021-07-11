@@ -1,3 +1,10 @@
+# v2.0.2 (TBD)
+
+Bugixes:
+
+- The progress display now works properly on terminals (such as urxvt)
+  that allow you to "backspace" (\x08) past the beginning of the line.
+
 # v2.0.1 (2020-10-06)
 
 Bugfixes:
@@ -20,7 +27,8 @@ New features:
 Bugfixes:
 
 - Fix an issue where native packages would fail to build when Pacman/makepkg is
-  at version 5.1 or later.
+  at version 5.1 or later.  If you mistakenly ran ART 1.x with makepkg 5.1, you
+  will need to delete the `.art-cache` in order to build the skipped packages.
 
 # v1.2 (2017-09-11)
 
