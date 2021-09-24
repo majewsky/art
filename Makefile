@@ -1,11 +1,9 @@
-PREFIX = /usr
-
-GO            = GOBIN=$(CURDIR)/build go
+PREFIX        = /usr
 GO_BUILDFLAGS = -mod vendor
-GO_LDFLAGS    = -s -w
+GO_LDFLAGS    = 
 
 all: FORCE
-	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' .
+	go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/art .
 
 install: FORCE all
 	install -D -m 0755 build/art "$(DESTDIR)$(PREFIX)/bin/art"
