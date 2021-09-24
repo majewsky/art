@@ -1,4 +1,4 @@
-PKG    = github.com/majewsky/art
+PKG    = github.com/majewsky/art@latest
 PREFIX = /usr
 
 GO            = GOPATH=$(CURDIR)/.gopath GOBIN=$(CURDIR)/build go
