@@ -1,18 +1,16 @@
-PKG    = github.com/majewsky/art
-PREFIX = /usr
-
-GO            = GOPATH=$(CURDIR)/.gopath GOBIN=$(CURDIR)/build go
-GO_BUILDFLAGS =
-GO_LDFLAGS    = -s -w
+PREFIX        = /usr
+GO_BUILDFLAGS = -mod vendor
+GO_LDFLAGS    = 
 
 all: FORCE
-	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)'
+	go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/art .
 
 install: FORCE all
 	install -D -m 0755 build/art "$(DESTDIR)$(PREFIX)/bin/art"
 
 vendor: FORCE
-	@# vendoring by https://github.com/holocm/golangvend
-	golangvend
+	go mod tidy
+	go mod vendor
+	go mod verify
 
 .PHONY: FORCE

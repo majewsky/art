@@ -1,6 +1,9 @@
 build/
-.golangvend-cache/
-.gopath/pkg/
 
 art.toml
 .art-cache
+
+# Old entries; remove them from .gitignore once their date is sufficiently far in the past.
+# 2021-07-07:
+.golangvend-cache/
+.gopath/pkg/
