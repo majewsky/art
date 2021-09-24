@@ -1,5 +1,4 @@
 build/
-/vendor/
 
 art.toml
 .art-cache
