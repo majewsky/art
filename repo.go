@@ -173,7 +173,7 @@ func (r Repository) addNewPackages(allOutputFiles []string, c *Cache, ui *UI) (o
 		return true
 	}
 
-	cmd := exec.Command("repo-add", append([]string{"-R", r.FileName()}, newOutputFiles...)...)
+	cmd := exec.Command("repo-add", append([]string{"-n", "-R", r.FileName()}, newOutputFiles...)...)
 	cmd.Dir = r.Path
 	cmd.Stdin = nil
 	cmd.Stdout = os.Stdout

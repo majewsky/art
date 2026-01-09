@@ -4,6 +4,8 @@ Bugixes:
 
 - The progress display now works properly on terminals (such as urxvt)
   that allow you to "backspace" (\x08) past the beginning of the line.
+- When `art` invokes `repo-add` from pacman >= 7.1.0, unchanged packages will
+  no longer be deleted unexpectedly.
 
 # v2.0.1 (2020-10-06)
 
