@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-//Source describes a directory from which packages are read.
+// Source describes a directory from which packages are read.
 type Source struct {
 	Path     string    `toml:"path"`
 	Packages []Package `toml:"-"`

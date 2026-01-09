@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-//Returns true if the two times differ by less than a second.
+// Returns true if the two times differ by less than a second.
 func fuzzyTimeEqual(t1 time.Time, t2 time.Time) bool {
 	unix1 := t1.UnixNano()
 	unix2 := t2.UnixNano()

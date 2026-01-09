@@ -26,7 +26,7 @@ import (
 	toml "github.com/BurntSushi/toml"
 )
 
-//Configuration is the contents of the configuration file.
+// Configuration is the contents of the configuration file.
 type Configuration struct {
 	Sources []*Source  `toml:"source"`
 	Target  Repository `toml:"target"`

@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-//MakepkgConfig contains the fields from makepkg.conf that interest us.
+// MakepkgConfig contains the fields from makepkg.conf that interest us.
 type MakepkgConfig struct {
 	Architecture string
 	GPGKeyID     string
@@ -57,9 +57,9 @@ func readMakepkgConfig() (MakepkgConfig, error) {
 	return result, nil
 }
 
-//FilterFilesForCurrentArch takes a list of output files that can be generated
-//by a PKGBUILD, and returns only these matching the current architecture (i.e.
-//where the architecture is the current one or "any").
+// FilterFilesForCurrentArch takes a list of output files that can be generated
+// by a PKGBUILD, and returns only these matching the current architecture (i.e.
+// where the architecture is the current one or "any").
 func (cfg MakepkgConfig) FilterFilesForCurrentArch(outputFiles []string) (result []string) {
 	arch1 := "-" + cfg.Architecture
 	arch2 := "-any"

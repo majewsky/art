@@ -30,18 +30,18 @@ import (
 	"strings"
 )
 
-//Repository represents a directory containing package files.
+// Repository represents a directory containing package files.
 type Repository struct {
 	Name string `toml:"name"`
 	Path string `toml:"path"`
 }
 
-//FileName returns the basename of the repository metadata archive.
+// FileName returns the basename of the repository metadata archive.
 func (r Repository) FileName() string {
 	return r.Name + ".db.tar.xz"
 }
 
-//RepositoryEntry represents an entry for a package in a repo metadata archive.
+// RepositoryEntry represents an entry for a package in a repo metadata archive.
 type RepositoryEntry struct {
 	PackageName string
 	FileName    string

@@ -30,18 +30,18 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-//PackageCacheEntry contains metadata for a Package instance that is held in the Cache.
+// PackageCacheEntry contains metadata for a Package instance that is held in the Cache.
 type PackageCacheEntry struct {
 	LastModified time.Time
 	OutputFiles  []string
 }
 
-//OutputCacheEntry contains metadata for an output file that is held in the Cache.
+// OutputCacheEntry contains metadata for an output file that is held in the Cache.
 type OutputCacheEntry struct {
 	MD5Digest string
 }
 
-//Cache contains metadata for a number of Package instances.
+// Cache contains metadata for a number of Package instances.
 type Cache struct {
 	Packages    map[string]PackageCacheEntry `toml:"package"`
 	OutputFiles map[string]OutputCacheEntry  `toml:"output"`
@@ -86,7 +86,7 @@ func (c *Cache) writeCache() error {
 	return ioutil.WriteFile(cachePath, buf.Bytes(), 0644)
 }
 
-//GetEntryForPackage retrieves (or creates) a cache entry for the given Package.
+// GetEntryForPackage retrieves (or creates) a cache entry for the given Package.
 func (c *Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
 	entry, exists := c.Packages[pkg.CacheKey()]
 
@@ -111,7 +111,7 @@ func (c *Cache) GetEntryForPackage(pkg Package) (PackageCacheEntry, error) {
 	return entry, nil
 }
 
-//GetEntryForOutputFile retrieves (or creates) a cache entry for the given output file.
+// GetEntryForOutputFile retrieves (or creates) a cache entry for the given output file.
 func (c *Cache) GetEntryForOutputFile(path string) (OutputCacheEntry, error) {
 	baseName := filepath.Base(path)
 	entry, exists := c.OutputFiles[baseName]
@@ -134,8 +134,8 @@ func (c *Cache) GetEntryForOutputFile(path string) (OutputCacheEntry, error) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-//Build performs (if needed) the build of the given package into the given
-//target directory.
+// Build performs (if needed) the build of the given package into the given
+// target directory.
 func (c *Cache) Build(pkg Package, targetDirPath string, ui *UI) error {
 	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {
@@ -179,8 +179,8 @@ func (c *Cache) Build(pkg Package, targetDirPath string, ui *UI) error {
 	return pkg.Build(targetDirPath)
 }
 
-//AddMissingSignatures adds signature files to all output files that do not
-//have one yet. It returns a list of the names of all output files.
+// AddMissingSignatures adds signature files to all output files that do not
+// have one yet. It returns a list of the names of all output files.
 func (c *Cache) AddMissingSignatures(pkg Package, targetDirPath string, mcfg MakepkgConfig) ([]string, error) {
 	entry, err := c.GetEntryForPackage(pkg)
 	if err != nil {

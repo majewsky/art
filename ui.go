@@ -20,14 +20,14 @@ package main
 
 import "fmt"
 
-//UI encapsulates the state of the terminal display.
+// UI encapsulates the state of the terminal display.
 type UI struct {
 	task  string
 	step  uint
 	count uint
 }
 
-//ShowError prints the given error if it is not nil.
+// ShowError prints the given error if it is not nil.
 func (ui *UI) ShowError(err error) {
 	if err != nil {
 		if ui.task != "" {
@@ -37,7 +37,7 @@ func (ui *UI) ShowError(err error) {
 	}
 }
 
-//ShowWarning prints the given warning.
+// ShowWarning prints the given warning.
 func (ui *UI) ShowWarning(msg string, args ...interface{}) {
 	if ui.task != "" {
 		fmt.Printf("\n")
@@ -48,7 +48,7 @@ func (ui *UI) ShowWarning(msg string, args ...interface{}) {
 	fmt.Printf("\x1B[1;33m[ warn] \x1B[0;33m%s\x1B[0m\n", msg)
 }
 
-//SetCurrentTask displays the progress of the next task.
+// SetCurrentTask displays the progress of the next task.
 func (ui *UI) SetCurrentTask(task string, count uint) {
 	if ui.task != "" {
 		ui.EndTask()
@@ -59,13 +59,13 @@ func (ui *UI) SetCurrentTask(task string, count uint) {
 	ui.displayTask()
 }
 
-//StepTask increases the counter on the task.
+// StepTask increases the counter on the task.
 func (ui *UI) StepTask() {
 	ui.step++
 	ui.displayTask()
 }
 
-//EndTask signals the end of the current task.
+// EndTask signals the end of the current task.
 func (ui *UI) EndTask() {
 	if ui.task != "" {
 		ui.step = ui.count

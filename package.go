@@ -27,8 +27,8 @@ import (
 	"time"
 )
 
-//Package is a package definition. It is satisfied by types HoloBuildPackage
-//and NativePackage.
+// Package is a package definition. It is satisfied by types HoloBuildPackage
+// and NativePackage.
 type Package interface {
 	//CacheKey returns a string that uniquely idenfities this package.
 	CacheKey() string
@@ -40,19 +40,19 @@ type Package interface {
 	Build(targetDirPath string) error
 }
 
-//HoloBuildPackage describes a package declaration that can be built by using
-//holo-build(8).
+// HoloBuildPackage describes a package declaration that can be built by using
+// holo-build(8).
 type HoloBuildPackage struct {
 	Path          string
 	MakepkgConfig MakepkgConfig
 }
 
-//CacheKey implements the Package interface.
+// CacheKey implements the Package interface.
 func (pkg HoloBuildPackage) CacheKey() string {
 	return pkg.Path
 }
 
-//LastModified implements the Package interface.
+// LastModified implements the Package interface.
 func (pkg HoloBuildPackage) LastModified() (time.Time, error) {
 	fi, err := os.Stat(pkg.Path)
 	if err != nil {
@@ -61,7 +61,7 @@ func (pkg HoloBuildPackage) LastModified() (time.Time, error) {
 	return fi.ModTime(), nil
 }
 
-//OutputFiles implements the Package interface.
+// OutputFiles implements the Package interface.
 func (pkg HoloBuildPackage) OutputFiles() ([]string, error) {
 	cmd := exec.Command("holo-build", "--suggest-filename", pkg.Path)
 	cmd.Stdin = nil
@@ -73,7 +73,7 @@ func (pkg HoloBuildPackage) OutputFiles() ([]string, error) {
 	return pkg.MakepkgConfig.FilterFilesForCurrentArch(result), err
 }
 
-//Build implements the Package interface.
+// Build implements the Package interface.
 func (pkg HoloBuildPackage) Build(targetDirPath string) error {
 	absPath, err := filepath.Abs(pkg.Path)
 	if err != nil {
@@ -88,19 +88,19 @@ func (pkg HoloBuildPackage) Build(targetDirPath string) error {
 	return cmd.Run()
 }
 
-//NativePackage describes a directory with a PKGBUILD that can be built using
-//makepkg(8).
+// NativePackage describes a directory with a PKGBUILD that can be built using
+// makepkg(8).
 type NativePackage struct {
 	Path          string
 	MakepkgConfig MakepkgConfig
 }
 
-//CacheKey implements the Package interface.
+// CacheKey implements the Package interface.
 func (pkg NativePackage) CacheKey() string {
 	return pkg.Path
 }
 
-//LastModified implements the Package interface.
+// LastModified implements the Package interface.
 func (pkg NativePackage) LastModified() (time.Time, error) {
 	fi, err := os.Stat(pkg.Path)
 	if err != nil {
@@ -109,7 +109,7 @@ func (pkg NativePackage) LastModified() (time.Time, error) {
 	return fi.ModTime(), nil
 }
 
-//OutputFiles implements the Package interface.
+// OutputFiles implements the Package interface.
 func (pkg NativePackage) OutputFiles() ([]string, error) {
 	cmd := exec.Command("makepkg", "--packagelist", "-p", filepath.Base(pkg.Path))
 	cmd.Dir = filepath.Dir(pkg.Path)
@@ -133,7 +133,7 @@ func (pkg NativePackage) OutputFiles() ([]string, error) {
 	return pkg.MakepkgConfig.FilterFilesForCurrentArch(result), nil
 }
 
-//Build implements the Package interface.
+// Build implements the Package interface.
 func (pkg NativePackage) Build(targetDirPath string) error {
 	cmd := exec.Command("makepkg", "-s", "-p", filepath.Base(pkg.Path))
 	cmd.Dir = filepath.Dir(pkg.Path)
