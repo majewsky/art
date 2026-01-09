@@ -1,11 +1,17 @@
-# v2.0.2 (TBD)
+# v2.1.0 (TBD)
 
-Bugixes:
+Bugfixes:
 
 - The progress display now works properly on terminals (such as urxvt)
   that allow you to "backspace" (\x08) past the beginning of the line.
 - When `art` invokes `repo-add` from pacman >= 7.1.0, unchanged packages will
   no longer be deleted unexpectedly.
+
+Changes:
+
+- `art.toml` now supports [TOML 1.1][toml-changelog] syntax.
+
+[toml-changelog]: https://github.com/toml-lang/toml/blob/main/CHANGELOG.md
 
 # v2.0.1 (2020-10-06)
 
